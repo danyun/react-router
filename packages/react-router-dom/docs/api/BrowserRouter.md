@@ -3,15 +3,13 @@
 A [`<Router>`](../../../react-router/docs/api/Router.md) that uses the HTML5 history API (`pushState`, `replaceState` and the `popstate` event) to keep your UI in sync with the URL.
 
 ```jsx
-import { BrowserRouter } from 'react-router-dom'
-
 <BrowserRouter
   basename={optionalString}
   forceRefresh={optionalBool}
   getUserConfirmation={optionalFunc}
   keyLength={optionalNumber}
 >
-  <App/>
+  <App />
 </BrowserRouter>
 ```
 
@@ -20,8 +18,11 @@ import { BrowserRouter } from 'react-router-dom'
 The base URL for all locations. If your app is served from a sub-directory on your server, you'll want to set this to the sub-directory. A properly formatted basename should have a leading slash, but no trailing slash.
 
 ```jsx
-<BrowserRouter basename="/calendar"/>
-<Link to="/today"/> // renders <a href="/calendar/today">
+<BrowserRouter basename="/calendar">
+    <Link to="/today"/> // renders <a href="/calendar/today">
+    <Link to="/tomorrow"/> // renders <a href="/calendar/tomorrow">
+    ...
+</BrowserRouter>
 ```
 
 ## getUserConfirmation: func
@@ -29,22 +30,21 @@ The base URL for all locations. If your app is served from a sub-directory on yo
 A function to use to confirm navigation. Defaults to using [`window.confirm`](https://developer.mozilla.org/en-US/docs/Web/API/Window/confirm).
 
 ```jsx
-// this is the default behavior
-const getConfirmation = (message, callback) => {
-  const allowTransition = window.confirm(message)
-  callback(allowTransition)
-}
-
-<BrowserRouter getUserConfirmation={getConfirmation}/>
+<BrowserRouter
+  getUserConfirmation={(message, callback) => {
+    // this is the default behavior
+    const allowTransition = window.confirm(message);
+    callback(allowTransition);
+  }}
+/>
 ```
 
 ## forceRefresh: bool
 
-If `true` the router will use full page refreshes on page navigation. You probably only want this in [browsers that don't support the HTML5 history API](http://caniuse.com/#feat=history).
+If `true` the router will use full page refreshes on page navigation. You may want to use this to imitate the way a traditional server-rendered app would work with full page refreshes between page navigation.
 
 ```jsx
-const supportsHistory = 'pushState' in window.history
-<BrowserRouter forceRefresh={!supportsHistory}/>
+<BrowserRouter forceRefresh={true} />
 ```
 
 ## keyLength: number
@@ -52,9 +52,11 @@ const supportsHistory = 'pushState' in window.history
 The length of `location.key`. Defaults to 6.
 
 ```jsx
-<BrowserRouter keyLength={12}/>
+<BrowserRouter keyLength={12} />
 ```
 
 ## children: node
 
-A [single child element](https://facebook.github.io/react/docs/react-api.html#react.children.only) to render.
+The child elements to render.
+
+Note: On React &lt; 16 you must use a [single child element](https://facebook.github.io/react/docs/react-api.html#reactchildrenonly) since a render method cannot return more than one element. If you need more than one element, you might try wrapping them in an extra `<div>`.

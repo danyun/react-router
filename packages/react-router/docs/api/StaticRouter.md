@@ -7,33 +7,34 @@ This can be useful in server-side rendering scenarios when the user isn't actual
 Here's an example node server that sends a 302 status code for [`<Redirect>`](Redirect.md)s and regular HTML for other requests:
 
 ```jsx
-import { createServer } from 'http'
-import React from 'react'
-import ReactDOMServer from 'react-dom/server'
-import { StaticRouter } from 'react-router'
+import http from "http";
+import React from "react";
+import ReactDOMServer from "react-dom/server";
+import { StaticRouter } from "react-router";
 
-createServer((req, res) => {
+http
+  .createServer((req, res) => {
+    // This context object contains the results of the render
+    const context = {};
 
-  // This context object contains the results of the render
-  const context = {}
+    const html = ReactDOMServer.renderToString(
+      <StaticRouter location={req.url} context={context}>
+        <App />
+      </StaticRouter>
+    );
 
-  const html = ReactDOMServer.renderToString(
-    <StaticRouter location={req.url} context={context}>
-      <App/>
-    </StaticRouter>
-  )
-
-  // context.url will contain the URL to redirect to if a <Redirect> was used
-  if (context.url) {
-    res.writeHead(302, {
-      Location: context.url
-    })
-    res.end()
-  } else {
-    res.write(html)
-    res.end()
-  }
-}).listen(3000)
+    // context.url will contain the URL to redirect to if a <Redirect> was used
+    if (context.url) {
+      res.writeHead(302, {
+        Location: context.url
+      });
+      res.end();
+    } else {
+      res.write(html);
+      res.end();
+    }
+  })
+  .listen(3000);
 ```
 
 ## basename: string
@@ -52,7 +53,7 @@ The URL the server received, probably `req.url` on a node server.
 
 ```jsx
 <StaticRouter location={req.url}>
-  <App/>
+  <App />
 </StaticRouter>
 ```
 
@@ -61,8 +62,8 @@ The URL the server received, probably `req.url` on a node server.
 A location object shaped like `{ pathname, search, hash, state }`
 
 ```jsx
-<StaticRouter location={{ pathname: '/bubblegum' }}>
-  <App/>
+<StaticRouter location={{ pathname: "/bubblegum" }}>
+  <App />
 </StaticRouter>
 ```
 
@@ -82,11 +83,13 @@ When a `<Route>` matches, it will pass the context object to the component it re
 After the render, these properties can be used to to configure the server's response.
 
 ```js
-if(context.status === '404') {
+if (context.status === "404") {
   // ...
 }
 ```
 
 ## children: node
 
-A [single child element](https://facebook.github.io/react/docs/react-api.html#react.children.only) to render.
+The child elements to render.
+
+Note: On React &lt; 16 you must use a [single child element](https://facebook.github.io/react/docs/react-api.html#reactchildrenonly) since a render method cannot return more than one element. If you need more than one element, you might try wrapping them in an extra `<div>`.

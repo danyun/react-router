@@ -8,9 +8,9 @@ import {
   DeepLinking,
   BackButton,
   Prompt
-} from "./main";
+} from "react-router-native";
 
-export default class ReactRouterNative extends React.Component {
+class ReactRouterNative extends React.Component {
   render() {
     return (
       <NativeRouter>
@@ -27,7 +27,9 @@ export default class ReactRouterNative extends React.Component {
                   Welcome to React Router Native!
                 </Text>
                 <Link to="/one">
-                  <Text style={styles.instructions}>Go to "/one"</Text>
+                  <Text style={styles.instructions}>
+                    Go to &quot;/one&quot;
+                  </Text>
                 </Link>
               </View>
             )}
@@ -72,3 +74,5 @@ const styles = StyleSheet.create({
 });
 
 AppRegistry.registerComponent("ReactRouterNative", () => ReactRouterNative);
+
+export default ReactRouterNative;

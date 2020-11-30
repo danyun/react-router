@@ -25,10 +25,6 @@ module.exports = {
         process.env.NODE_ENV || "development"
       )
     }),
-    new webpack.optimize.CommonsChunkPlugin({
-      name: "vendor",
-      filename: `vendor-[chunkHash].js`
-    }),
     new HTMLWebpackPlugin({
       template: "index.html.ejs"
     }),
@@ -44,20 +40,25 @@ module.exports = {
       : []
   ),
 
+  optimization: {
+    splitChunks: {
+      name: "vendor"
+    }
+  },
+
   resolve: {
-    modules: [
-      path.resolve(__dirname, "../"),
-      path.resolve(__dirname, "../node_modules")
-    ],
     alias: {
       "react-router": path.resolve(__dirname, "../packages/react-router"),
-      "react-router-dom": path.resolve(__dirname, "modules/ReactRouterDOMShim")
+      "react-router-dom": path.resolve(
+        __dirname,
+        "../packages/react-router-dom"
+      )
     }
   },
 
   resolveLoader: {
     modules: [
-      path.resolve(__dirname, "../node_modules"),
+      path.resolve(__dirname, "node_modules"),
       path.resolve(__dirname, "webpack")
     ]
   },
@@ -67,7 +68,9 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: /node_modules|examples/,
-        loader: "babel-loader"
+        use: {
+          loader: "babel-loader"
+        }
       },
       {
         test: /\.js$/,
@@ -80,7 +83,9 @@ module.exports = {
               lazy: true
             }
           },
-          { loader: "babel-loader" }
+          {
+            loader: "babel-loader"
+          }
         ]
       },
       {
@@ -134,6 +139,7 @@ module.exports = {
     historyApiFallback: true,
     quiet: false,
     noInfo: false,
+    publicPath: "/",
     stats: {
       assets: true,
       version: false,

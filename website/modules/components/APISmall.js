@@ -1,11 +1,12 @@
 import React, { Component } from "react";
-import PropTypes from "prop-types";
 import { Redirect, Route } from "react-router-dom";
 import { Block } from "jsxstyle";
-import ScrollToDoc from "./ScrollToDoc";
-import MarkdownViewer from "./MarkdownViewer";
+import PropTypes from "prop-types";
 
-class APISmall extends Component {
+import ScrollToDoc from "./ScrollToDoc.js";
+import MarkdownViewer from "./MarkdownViewer.js";
+
+export default class APISmall extends Component {
   static propTypes = {
     match: PropTypes.object,
     data: PropTypes.object
@@ -13,7 +14,9 @@ class APISmall extends Component {
 
   render() {
     const { match, data } = this.props;
-    const { params: { mod, environment } } = match;
+    const {
+      params: { mod, environment }
+    } = match;
     const doc = mod && data.api.find(doc => mod === doc.title.slug);
 
     return !doc ? (
@@ -31,7 +34,11 @@ class APISmall extends Component {
         </Block>
         <Route
           path={`${match.path}/:header`}
-          render={({ match: { params: { header: slug } } }) => {
+          render={({
+            match: {
+              params: { header: slug }
+            }
+          }) => {
             const header = doc.headers.find(h => h.slug === slug);
             return header ? (
               <ScrollToDoc doc={doc} header={header} />
@@ -44,5 +51,3 @@ class APISmall extends Component {
     );
   }
 }
-
-export default APISmall;

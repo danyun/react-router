@@ -1,79 +1,126 @@
 import React from "react";
+import { __RouterContext as RouterContext, matchPath } from "react-router";
 import PropTypes from "prop-types";
-import Route from "./Route";
-import Link from "./Link";
+import invariant from "tiny-invariant";
+import Link from "./Link.js";
+import {
+  resolveToLocation,
+  normalizeToLocation
+} from "./utils/locationUtils.js";
+
+// React 15 compat
+const forwardRefShim = C => C;
+let { forwardRef } = React;
+if (typeof forwardRef === "undefined") {
+  forwardRef = forwardRefShim;
+}
+
+function joinClassnames(...classnames) {
+  return classnames.filter(i => i).join(" ");
+}
 
 /**
  * A <Link> wrapper that knows if it's "active" or not.
  */
-const NavLink = ({
-  to,
-  exact,
-  strict,
-  location,
-  activeClassName,
-  className,
-  activeStyle,
-  style,
-  isActive: getIsActive,
-  "aria-current": ariaCurrent,
-  ...rest
-}) => {
-  const path = typeof to === "object" ? to.pathname : to;
+const NavLink = forwardRef(
+  (
+    {
+      "aria-current": ariaCurrent = "page",
+      activeClassName = "active",
+      activeStyle,
+      className: classNameProp,
+      exact,
+      isActive: isActiveProp,
+      location: locationProp,
+      sensitive,
+      strict,
+      style: styleProp,
+      to,
+      innerRef, // TODO: deprecate
+      ...rest
+    },
+    forwardedRef
+  ) => {
+    return (
+      <RouterContext.Consumer>
+        {context => {
+          invariant(context, "You should not use <NavLink> outside a <Router>");
 
-  // Regex taken from: https://github.com/pillarjs/path-to-regexp/blob/master/index.js#L202
-  const escapedPath = path && path.replace(/([.+*?=^!:${}()[\]|/\\])/g, "\\$1");
+          const currentLocation = locationProp || context.location;
+          const toLocation = normalizeToLocation(
+            resolveToLocation(to, currentLocation),
+            currentLocation
+          );
+          const { pathname: path } = toLocation;
+          // Regex taken from: https://github.com/pillarjs/path-to-regexp/blob/master/index.js#L202
+          const escapedPath =
+            path && path.replace(/([.+*?=^!:${}()[\]|/\\])/g, "\\$1");
 
-  return (
-    <Route
-      path={escapedPath}
-      exact={exact}
-      strict={strict}
-      location={location}
-      children={({ location, match }) => {
-        const isActive = !!(getIsActive ? getIsActive(match, location) : match);
+          const match = escapedPath
+            ? matchPath(currentLocation.pathname, {
+                path: escapedPath,
+                exact,
+                sensitive,
+                strict
+              })
+            : null;
+          const isActive = !!(isActiveProp
+            ? isActiveProp(match, currentLocation)
+            : match);
 
-        return (
-          <Link
-            to={to}
-            className={
-              isActive
-                ? [className, activeClassName].filter(i => i).join(" ")
-                : className
-            }
-            style={isActive ? { ...style, ...activeStyle } : style}
-            aria-current={(isActive && ariaCurrent) || null}
-            {...rest}
-          />
-        );
-      }}
-    />
-  );
-};
+          const className = isActive
+            ? joinClassnames(classNameProp, activeClassName)
+            : classNameProp;
+          const style = isActive ? { ...styleProp, ...activeStyle } : styleProp;
 
-NavLink.propTypes = {
-  to: Link.propTypes.to,
-  exact: PropTypes.bool,
-  strict: PropTypes.bool,
-  location: PropTypes.object,
-  activeClassName: PropTypes.string,
-  className: PropTypes.string,
-  activeStyle: PropTypes.object,
-  style: PropTypes.object,
-  isActive: PropTypes.func,
-  "aria-current": PropTypes.oneOf([
+          const props = {
+            "aria-current": (isActive && ariaCurrent) || null,
+            className,
+            style,
+            to: toLocation,
+            ...rest
+          };
+
+          // React 15 compat
+          if (forwardRefShim !== forwardRef) {
+            props.ref = forwardedRef || innerRef;
+          } else {
+            props.innerRef = innerRef;
+          }
+
+          return <Link {...props} />;
+        }}
+      </RouterContext.Consumer>
+    );
+  }
+);
+
+if (__DEV__) {
+  NavLink.displayName = "NavLink";
+
+  const ariaCurrentType = PropTypes.oneOf([
     "page",
     "step",
     "location",
     "date",
     "time",
-    "true"
-  ])
-};
+    "true",
+    "false"
+  ]);
 
-NavLink.defaultProps = {
-  activeClassName: "active",
-  "aria-current": "page"
-};
+  NavLink.propTypes = {
+    ...Link.propTypes,
+    "aria-current": ariaCurrentType,
+    activeClassName: PropTypes.string,
+    activeStyle: PropTypes.object,
+    className: PropTypes.string,
+    exact: PropTypes.bool,
+    isActive: PropTypes.func,
+    location: PropTypes.object,
+    sensitive: PropTypes.bool,
+    strict: PropTypes.bool,
+    style: PropTypes.object
+  };
+}
 
 export default NavLink;

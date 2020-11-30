@@ -1,7 +1,20 @@
 {
   "presets": [
-    [ "es2015", { "loose": true } ],
-    "stage-1",
-    "react"
+    [
+      "@babel/env",
+      {
+        "loose": true
+      }
+    ],
+    "@babel/react"
+  ],
+  "plugins": [
+    "dev-expression",
+    [
+      "@babel/plugin-proposal-class-properties",
+      {
+        "loose": true
+      }
+    ]
   ]
 }

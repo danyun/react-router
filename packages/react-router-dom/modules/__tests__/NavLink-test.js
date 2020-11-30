@@ -1,30 +1,66 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import MemoryRouter from "react-router/MemoryRouter";
-import NavLink from "../NavLink";
-import withRouter from "../withRouter";
+import { MemoryRouter, NavLink, withRouter, Route } from "react-router-dom";
 
-describe("NavLink", () => {
+import renderStrict from "./utils/renderStrict.js";
+
+describe("A <NavLink>", () => {
   const node = document.createElement("div");
 
   afterEach(() => {
     ReactDOM.unmountComponentAtNode(node);
   });
 
-  describe("When a <NavLink> is active", () => {
+  it("forwards a ref", () => {
+    let refNode;
+    function refCallback(n) {
+      refNode = n;
+    }
+
+    renderStrict(
+      <MemoryRouter>
+        <NavLink to="/" ref={refCallback}>
+          link
+        </NavLink>
+      </MemoryRouter>,
+      node
+    );
+
+    expect(refNode).not.toBe(undefined);
+    expect(refNode.tagName).toEqual("A");
+  });
+
+  describe("when active", () => {
     it("applies its default activeClassName", () => {
-      ReactDOM.render(
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/pizza">Pizza!</NavLink>
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
-      expect(a.className).toEqual("active");
+
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("active");
     });
 
-    it("applies its passed activeClassName", () => {
-      ReactDOM.render(
+    it("applies its default activeClassName with function `to` prop", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza"]}>
+          <NavLink to={location => ({ ...location, pathname: "/pizza" })}>
+            Pizza!
+          </NavLink>
+        </MemoryRouter>,
+        node
+      );
+
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("active");
+    });
+
+    it("applies a custom activeClassName instead of the default", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/pizza" activeClassName="selected">
             Pizza!
@@ -32,16 +68,18 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.className).not.toContain("active");
-      expect(a.className).toEqual("selected");
+      expect(a.className).toContain("selected");
     });
 
     it("applies its activeStyle", () => {
       const defaultStyle = { color: "black" };
       const activeStyle = { color: "red" };
 
-      ReactDOM.render(
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/pizza" style={defaultStyle} activeStyle={activeStyle}>
             Pizza!
@@ -49,39 +87,43 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.style.color).toBe(activeStyle.color);
     });
 
-    it("applies aria-current of page if no override value is given", () => {
-      ReactDOM.render(
+    it("applies the default aria-current", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
-          <NavLink to="/pizza" activeClassName="selected">
-            Pizza!
-          </NavLink>
+          <NavLink to="/pizza">Pizza!</NavLink>
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.getAttribute("aria-current")).toEqual("page");
     });
 
-    it("applies the override aria-current value when given", () => {
-      ReactDOM.render(
+    it("applies a custom aria-current instead of the default", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
-          <NavLink to="/pizza" activeClassName="selected" aria-current="true">
+          <NavLink to="/pizza" aria-current="true">
             Pizza!
           </NavLink>
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.getAttribute("aria-current")).toEqual("true");
     });
 
     it("handles locations without a pathname", () => {
       expect(() => {
-        ReactDOM.render(
+        renderStrict(
           <MemoryRouter initialEntries={["/pizza"]}>
             <NavLink to={{ search: "foo=bar" }}>Pizza!</NavLink>
           </MemoryRouter>,
@@ -90,18 +132,18 @@ describe("NavLink", () => {
       }).not.toThrow();
     });
 
-    it("it properly escapes path-to-regexp special characters", () => {
-      ReactDOM.render(
+    it("it automatically escapes special characters in the path", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza (1)"]}>
           <NavLink to="/pizza (1)">Pizza!</NavLink>
         </MemoryRouter>,
         node
       );
 
-      const href = node.querySelector("a").getAttribute("href");
-      expect(href).toEqual("/pizza (1)");
-      const a = node.getElementsByTagName("a")[0];
-      expect(a.className).toEqual("active");
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("active");
+      expect(a.getAttribute("href")).toEqual("/pizza (1)");
     });
 
     it("renders child components that use withRouter", () => {
@@ -110,10 +152,11 @@ describe("NavLink", () => {
           return null;
         }
       }
+
       const Component = withRouter(WrappedComponent);
 
       let ref;
-      ReactDOM.render(
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/pizza">
             <Component wrappedComponentRef={r => (ref = r)} />
@@ -126,20 +169,22 @@ describe("NavLink", () => {
     });
   });
 
-  describe("When a <NavLink> is not active", () => {
+  describe("when inactive", () => {
     it("does not apply its default activeClassName", () => {
-      ReactDOM.render(
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/salad">Salad?</NavLink>
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.className).not.toContain("active");
     });
 
-    it("does not apply its passed activeClassName", () => {
-      ReactDOM.render(
+    it("does not apply its activeClassName", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/salad" activeClassName="selected">
             Salad?
@@ -147,7 +192,9 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.className).not.toContain("active");
       expect(a.className).not.toContain("selected");
     });
@@ -156,7 +203,7 @@ describe("NavLink", () => {
       const defaultStyle = { color: "black" };
       const activeStyle = { color: "red" };
 
-      ReactDOM.render(
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/salad" style={defaultStyle} activeStyle={activeStyle}>
             Salad?
@@ -164,12 +211,14 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.style.color).toBe(defaultStyle.color);
     });
 
     it("does not apply an aria-current value if no override value is given", () => {
-      ReactDOM.render(
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/salad" activeClassName="selected" aria-current="page">
             Pizza!
@@ -177,12 +226,14 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.getAttribute("aria-current")).toBeNull();
     });
 
     it("does not apply an aria-current value if an override value is given", () => {
-      ReactDOM.render(
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/salad" activeClassName="selected">
             Pizza!
@@ -190,7 +241,9 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.getAttribute("aria-current")).toBeNull();
     });
 
@@ -200,10 +253,11 @@ describe("NavLink", () => {
           return null;
         }
       }
+
       const Component = withRouter(WrappedComponent);
 
       let ref;
-      ReactDOM.render(
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink exact to="/salad">
             <Component wrappedComponentRef={r => (ref = r)} />
@@ -218,7 +272,7 @@ describe("NavLink", () => {
 
   describe("isActive", () => {
     it("applies active default props when isActive returns true", () => {
-      ReactDOM.render(
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/pizza" isActive={() => true}>
             Pizza!
@@ -226,12 +280,14 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
-      expect(a.className).toEqual("active");
+
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("active");
     });
 
-    it("applies active passed props when isActive returns true", () => {
-      ReactDOM.render(
+    it("applies activeClassName when isActive returns true", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/pizza" activeClassName="selected" isActive={() => true}>
             Pizza!
@@ -239,13 +295,15 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.className).not.toContain("active");
-      expect(a.className).toEqual("selected");
+      expect(a.className).toContain("selected");
     });
 
-    it("does not apply active default props when isActive returns false", () => {
-      ReactDOM.render(
+    it("does not apply default activeClassName when isActive returns false", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink to="/pizza" isActive={() => false}>
             Pizza!
@@ -253,12 +311,14 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.className).not.toContain("active");
     });
 
-    it("does not apply active passed props when isActive returns false", () => {
-      ReactDOM.render(
+    it("does not apply custom activeClassName when isActive returns false", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink
             to="/pizza"
@@ -270,28 +330,32 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.className).not.toContain("active");
       expect(a.className).not.toContain("selected");
     });
   });
 
-  describe("exact", () => {
-    it("does not do exact matching by default", () => {
-      ReactDOM.render(
-        <MemoryRouter initialEntries={["/pizza/anchovies"]}>
-          <NavLink to="/pizza" activeClassName="active">
-            Pizza!
-          </NavLink>
-        </MemoryRouter>,
-        node
-      );
-      const a = node.getElementsByTagName("a")[0];
-      expect(a.className).toEqual("active");
-    });
+  it("does not do exact matching by default", () => {
+    renderStrict(
+      <MemoryRouter initialEntries={["/pizza/anchovies"]}>
+        <NavLink to="/pizza" activeClassName="active">
+          Pizza!
+        </NavLink>
+      </MemoryRouter>,
+      node
+    );
 
-    it("sets active default value only for exact matches", () => {
-      ReactDOM.render(
+    const a = node.querySelector("a");
+
+    expect(a.className).toContain("active");
+  });
+
+  describe("with `exact=true`", () => {
+    it("applies default activeClassName for exact matches", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink exact to="/pizza">
             Pizza!
@@ -299,26 +363,14 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
-      expect(a.className).toEqual("active");
+
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("active");
     });
 
-    it("sets active passed value only for exact matches", () => {
-      ReactDOM.render(
-        <MemoryRouter initialEntries={["/pizza"]}>
-          <NavLink exact to="/pizza" activeClassName="selected">
-            Pizza!
-          </NavLink>
-        </MemoryRouter>,
-        node
-      );
-      const a = node.getElementsByTagName("a")[0];
-      expect(a.className).not.toContain("active");
-      expect(a.className).toEqual("selected");
-    });
-
-    it("does not set active default value for partial matches", () => {
-      ReactDOM.render(
+    it("does not apply default activeClassName for partial matches", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza/anchovies"]}>
           <NavLink exact to="/pizza">
             Pizza!
@@ -326,12 +378,29 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.className).not.toContain("active");
     });
 
-    it("does not set active passed value for partial matches", () => {
-      ReactDOM.render(
+    it("applies custom activeClassName for exact matches", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza"]}>
+          <NavLink exact to="/pizza" activeClassName="selected">
+            Pizza!
+          </NavLink>
+        </MemoryRouter>,
+        node
+      );
+
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("selected");
+    });
+
+    it("applies custom activeClassName for partial matches", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza/anchovies"]}>
           <NavLink exact to="/pizza" activeClassName="selected">
             Pizza!
@@ -339,86 +408,190 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
-      expect(a.className).not.toContain("active");
+
+      const a = node.querySelector("a");
+
       expect(a.className).not.toContain("selected");
     });
   });
 
-  describe("strict (enforce path's trailing slash)", () => {
-    const PATH = "/pizza/";
-    it("does not do strict matching by default", () => {
-      ReactDOM.render(
-        <MemoryRouter initialEntries={["/pizza"]}>
-          <NavLink to={PATH}>Pizza!</NavLink>
-        </MemoryRouter>,
-        node
-      );
-      const a = node.getElementsByTagName("a")[0];
-      expect(a.className).toEqual("active");
-    });
+  it("does not do strict matching by default", () => {
+    renderStrict(
+      <MemoryRouter initialEntries={["/pizza"]}>
+        <NavLink to="/pizza/">Pizza!</NavLink>
+      </MemoryRouter>,
+      node
+    );
 
-    it("does not set active default value when location.pathname has no trailing slash", () => {
-      ReactDOM.render(
-        <MemoryRouter initialEntries={["/pizza"]}>
-          <NavLink strict to={PATH}>
+    const a = node.querySelector("a");
+
+    expect(a.className).toContain("active");
+  });
+
+  describe("with `strict=true`", () => {
+    it("applies default activeClassName for strict matches", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza/"]}>
+          <NavLink strict to="/pizza/">
             Pizza!
           </NavLink>
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
-      expect(a.className).not.toContain("active");
+
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("active");
     });
 
-    it("does not set active passed value when location.pathname has no trailing slash", () => {
-      ReactDOM.render(
+    it("does not apply default activeClassName for non-strict matches", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
-          <NavLink strict to={PATH} activeClassName="selected">
+          <NavLink strict to="/pizza/">
             Pizza!
           </NavLink>
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.className).not.toContain("active");
+    });
+
+    it("applies custom activeClassName for strict matches", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza/"]}>
+          <NavLink strict to="/pizza/" activeClassName="selected">
+            Pizza!
+          </NavLink>
+        </MemoryRouter>,
+        node
+      );
+
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("selected");
+    });
+
+    it("does not apply custom activeClassName for non-strict matches", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza"]}>
+          <NavLink strict to="/pizza/" activeClassName="selected">
+            Pizza!
+          </NavLink>
+        </MemoryRouter>,
+        node
+      );
+
+      const a = node.querySelector("a");
+
       expect(a.className).not.toContain("selected");
-    });
-
-    it("sets active default value when pathname has trailing slash", () => {
-      ReactDOM.render(
-        <MemoryRouter initialEntries={["/pizza/"]}>
-          <NavLink strict to={PATH}>
-            Pizza!
-          </NavLink>
-        </MemoryRouter>,
-        node
-      );
-      const a = node.getElementsByTagName("a")[0];
-      expect(a.className).toEqual("active");
-    });
-
-    it("sets active passed value when pathname has trailing slash", () => {
-      ReactDOM.render(
-        <MemoryRouter initialEntries={["/pizza/"]}>
-          <NavLink strict to={PATH} activeClassName="selected">
-            Pizza!
-          </NavLink>
-        </MemoryRouter>,
-        node
-      );
-      const a = node.getElementsByTagName("a")[0];
-      expect(a.className).not.toContain("active");
-      expect(a.className).toEqual("selected");
     });
   });
 
-  describe("location property", () => {
+  describe("with `sensitive=true`", () => {
+    it("applies default activeClassName for sensitive matches", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza"]}>
+          <NavLink sensitive to="/pizza">
+            Pizza!
+          </NavLink>
+        </MemoryRouter>,
+        node
+      );
+
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("active");
+    });
+
+    it("does not apply default activeClassName for non-sensitive matches", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/PIZZA"]}>
+          <NavLink sensitive to="/pizza">
+            Pizza!
+          </NavLink>
+        </MemoryRouter>,
+        node
+      );
+
+      const a = node.querySelector("a");
+
+      expect(a.className).not.toContain("active");
+    });
+
+    it("applies custom activeClassName for sensitive matches", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza"]}>
+          <NavLink sensitive to="/pizza" activeClassName="selected">
+            Pizza!
+          </NavLink>
+        </MemoryRouter>,
+        node
+      );
+
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("selected");
+    });
+
+    it("does not apply custom activeClassName for non-sensitive matches", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza"]}>
+          <NavLink sensitive to="/PIZZA" activeClassName="selected">
+            Pizza!
+          </NavLink>
+        </MemoryRouter>,
+        node
+      );
+
+      const a = node.querySelector("a");
+
+      expect(a.className).not.toContain("selected");
+    });
+  });
+
+  describe("the `location` prop", () => {
     it("overrides the current location", () => {
-      ReactDOM.render(
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza"]}>
+          <NavLink to="/pasta" location={{ pathname: "/pasta" }}>
+            Pasta!
+          </NavLink>
+        </MemoryRouter>,
+        node
+      );
+
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("active");
+    });
+
+    it("overrides the current location for isActive", () => {
+      renderStrict(
         <MemoryRouter initialEntries={["/pizza"]}>
           <NavLink
             to="/pasta"
+            isActive={(_, location) => location.pathname === "/pasta"}
+            location={{ pathname: "/pasta" }}
+          >
+            Pasta!
+          </NavLink>
+        </MemoryRouter>,
+        node
+      );
+
+      const a = node.querySelector("a");
+
+      expect(a.className).toContain("active");
+    });
+
+    it("is passed as an argument to function `to` prop", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza"]}>
+          <NavLink
+            to={location => location}
             activeClassName="selected"
             location={{ pathname: "/pasta" }}
           >
@@ -427,27 +600,91 @@ describe("NavLink", () => {
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
       expect(a.className).not.toContain("active");
       expect(a.className).toContain("selected");
     });
 
     it("is not overwritten by the current location", () => {
-      ReactDOM.render(
+      renderStrict(
         <MemoryRouter initialEntries={["/pasta"]}>
-          <NavLink
-            to="/pasta"
-            activeClassName="selected"
-            location={{ pathname: "/pizza" }}
-          >
+          <NavLink to="/pasta" location={{ pathname: "/pizza" }}>
             Pasta!
           </NavLink>
         </MemoryRouter>,
         node
       );
-      const a = node.getElementsByTagName("a")[0];
+
+      const a = node.querySelector("a");
+
       expect(a.className).not.toContain("active");
-      expect(a.className).not.toContain("selected");
+    });
+  });
+
+  describe("doesn't interfere with withRouter", () => {
+    let props;
+
+    const PropsChecker = withRouter(p => {
+      props = p;
+      return null;
+    });
+
+    beforeEach(() => {
+      props = null;
+    });
+
+    it("allows withRouter to access the correct match without route", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza/"]}>
+          <NavLink to="/pizza/">
+            <PropsChecker />
+          </NavLink>
+        </MemoryRouter>,
+        node
+      );
+
+      expect(props.match).not.toBeNull();
+      expect(props.match.url).toBe("/");
+    });
+
+    it("allows withRouter to access the correct match inside a route", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza/"]}>
+          <Route
+            path="/pizza"
+            component={() => (
+              <NavLink to="/pizza/">
+                <PropsChecker />
+              </NavLink>
+            )}
+          />
+        </MemoryRouter>,
+        node
+      );
+
+      expect(props.match).not.toBeNull();
+      expect(props.match.url).toBe("/pizza/");
+    });
+
+    it("allows withRouter to access the correct match with params inside a route", () => {
+      renderStrict(
+        <MemoryRouter initialEntries={["/pizza/cheese"]}>
+          <Route
+            path="/pizza/:topping"
+            component={() => (
+              <NavLink to="/pizza/">
+                <PropsChecker />
+              </NavLink>
+            )}
+          />
+        </MemoryRouter>,
+        node
+      );
+
+      expect(props.match).not.toBeNull();
+      expect(props.match.url).toBe("/pizza/cheese");
+      expect(props.match.params).toEqual({ topping: "cheese" });
     });
   });
 });

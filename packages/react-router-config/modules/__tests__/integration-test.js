@@ -1,16 +1,17 @@
 import React from "react";
-import ReactDOMServer from "react-dom/server";
-import StaticRouter from "react-router/StaticRouter";
-import matchRoutes from "../matchRoutes";
-import renderRoutes from "../renderRoutes";
+import { StaticRouter } from "react-router";
+import { matchRoutes, renderRoutes } from "react-router-config";
+
+import renderToStringStrict from "./utils/renderToStringStrict.js";
 
 describe("integration", () => {
   it("generates the same matches in renderRoutes and matchRoutes", () => {
     const rendered = [];
 
-    const Comp = ({ match, route: { routes } }) => (
-      rendered.push(match), renderRoutes(routes)
-    );
+    function Comp({ match, route: { routes } }) {
+      rendered.push(match);
+      return renderRoutes(routes);
+    }
 
     const routes = [
       {
@@ -44,11 +45,13 @@ describe("integration", () => {
 
     const pathname = "/pepper/jalepeno";
     const branch = matchRoutes(routes, pathname);
-    ReactDOMServer.renderToString(
+
+    renderToStringStrict(
       <StaticRouter location={pathname} context={{}}>
         {renderRoutes(routes)}
       </StaticRouter>
     );
+
     expect(branch.length).toEqual(2);
     expect(rendered.length).toEqual(2);
     expect(branch[0].match).toEqual(rendered[0]);
@@ -58,9 +61,10 @@ describe("integration", () => {
   it("generates the same matches in renderRoutes and matchRoutes with pathless routes", () => {
     const rendered = [];
 
-    const Comp = ({ match, route: { routes } }) => (
-      rendered.push(match), renderRoutes(routes)
-    );
+    function Comp({ match, route: { routes } }) {
+      rendered.push(match);
+      return renderRoutes(routes);
+    }
 
     const routes = [
       {
@@ -94,7 +98,7 @@ describe("integration", () => {
 
     const pathname = "/ghost";
     const branch = matchRoutes(routes, pathname);
-    ReactDOMServer.renderToString(
+    renderToStringStrict(
       <StaticRouter location={pathname} context={{}}>
         {renderRoutes(routes)}
       </StaticRouter>
@@ -108,9 +112,10 @@ describe("integration", () => {
   it("generates the same matches in renderRoutes and matchRoutes with routes using exact", () => {
     const rendered = [];
 
-    const Comp = ({ match, route: { routes } }) => (
-      rendered.push(match), renderRoutes(routes)
-    );
+    function Comp({ match, route: { routes } }) {
+      rendered.push(match);
+      return renderRoutes(routes);
+    }
 
     const routes = [
       // should skip
@@ -129,7 +134,7 @@ describe("integration", () => {
 
     const pathname = "/pepper";
     const branch = matchRoutes(routes, pathname);
-    ReactDOMServer.renderToString(
+    renderToStringStrict(
       <StaticRouter location={pathname} context={{}}>
         {renderRoutes(routes)}
       </StaticRouter>
@@ -142,9 +147,10 @@ describe("integration", () => {
   it("generates the same matches in renderRoutes and matchRoutes with routes using exact + strict", () => {
     const rendered = [];
 
-    const Comp = ({ match, route: { routes } }) => (
-      rendered.push(match), renderRoutes(routes)
-    );
+    function Comp({ match, route: { routes } }) {
+      rendered.push(match);
+      return renderRoutes(routes);
+    }
 
     const routes = [
       // should match
@@ -167,17 +173,20 @@ describe("integration", () => {
 
     let pathname = "/pepper";
     let branch = matchRoutes(routes, pathname);
-    ReactDOMServer.renderToString(
+
+    renderToStringStrict(
       <StaticRouter location={pathname} context={{}}>
         {renderRoutes(routes)}
       </StaticRouter>
     );
+
     expect(branch.length).toEqual(0);
     expect(rendered.length).toEqual(0);
 
     pathname = "/pepper/";
     branch = matchRoutes(routes, pathname);
-    ReactDOMServer.renderToString(
+
+    renderToStringStrict(
       <StaticRouter location={pathname} context={{}}>
         {renderRoutes(routes)}
       </StaticRouter>
